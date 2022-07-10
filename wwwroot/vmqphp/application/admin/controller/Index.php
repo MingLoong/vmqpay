@@ -274,15 +274,16 @@ class Index
 
         if ($res){
 
-            $url = $res['notify_url'];
-
             $res2 = Db::name("setting")->where("vkey","key")->find();
             $key = $res2['vvalue'];
 
-            $p = "payId=".$res['pay_id']."&param=".$res['param']."&type=".$res['type']."&price=".$res['price']."&reallyPrice=".$res['really_price'];
+            $p = "payId=".$res['pay_id']."&orderId=".$res['order_id']."&param=".$res['param']."&type=".$res['type']."&price=".$res['price']."&reallyPrice=".$res['really_price'];
 
             $sign = $res['pay_id'].$res['param'].$res['type'].$res['price'].$res['really_price'].$key;
             $p = $p . "&sign=".md5($sign);
+
+            $url = $res['notify_url'];
+            
             if (strpos($url,"?")===false){
                 $url = $url."?".$p;
             }else{

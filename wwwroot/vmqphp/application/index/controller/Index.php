@@ -247,39 +247,28 @@ class Index
             $isAuto = 0;
         }
 
-
         $res = Db::name("pay_order")->where("pay_id", $payId)->find();
-        if ($res) {
-            return json($this->getReturn(-1, "商户订单号已存在"));
-        }
-
-
-
-
         $createDate = time();
-        $data = array(
-            "close_date" => 0,
-            "create_date" => $createDate,
-            "is_auto" => $isAuto,
-            "notify_url" => $notify_url,
-            "order_id" => $orderId,
-            "param" => $param,
-            "pay_date" => 0,
-            "pay_id" => $payId,
-            "pay_url" => $payUrl,
-            "price" => $price,
-            "really_price" => $reallyPrice,
-            "return_url" => $return_url,
-            "state" => 0,
-            "type" => $type
+        if (!$res) {
+             $data = array(
+                        "close_date" => 0,
+                        "create_date" => $createDate,
+                        "is_auto" => $isAuto,
+                        "notify_url" => $notify_url,
+                        "order_id" => $orderId,
+                        "param" => $param,
+                        "pay_date" => 0,
+                        "pay_id" => $payId,
+                        "pay_url" => $payUrl,
+                        "price" => $price,
+                        "really_price" => $reallyPrice,
+                        "return_url" => $return_url,
+                        "state" => 0,
+                        "type" => $type
 
-        );
-
-
-        Db::name("pay_order")->insert($data);
-
-
-        //return "<script>window.location.href = '/payPage/pay.html?orderId=" + c.getOrderId() + "'</script>";
+            );
+            Db::name("pay_order")->insert($data);
+        }
 
         if ($isHtml == 1) {
 
@@ -302,8 +291,6 @@ class Index
             return json($this->getReturn(1, "成功", $data));
 
         }
-
-
     }
     //获取订单信息
     public function getOrder()
@@ -333,7 +320,8 @@ class Index
     //查询订单状态
     public function checkOrder()
     {
-        $res = Db::name("pay_order")->where("order_id", input("orderId"))->find();
+        $orderId = input("orderId");
+        $res = Db::name("pay_order")->where("order_id", $orderId)->find();
         if ($res){
             if ($res['state']==0){
                 return json($this->getReturn(-1, "订单未支付"));
@@ -349,21 +337,18 @@ class Index
             $res['really_price'] = number_format($res['really_price'],2,".","");
 
 
-            $p = "payId=".$res['pay_id']."&param=".$res['param']."&type=".$res['type']."&price=".$res['price']."&reallyPrice=".$res['really_price'];
+            $p = "payId=".$res['pay_id']."&orderId=".$orderId."&param=".$res['param']."&type=".$res['type']."&price=".$res['price']."&reallyPrice=".$res['really_price'];
 
             $sign = $res['pay_id'].$res['param'].$res['type'].$res['price'].$res['really_price'].$key;
             $p = $p . "&sign=".md5($sign);
 
             $url = $res['return_url'];
 
-
-
             if (strpos($url,"?")===false){
                 $url = $url."?".$p;
             }else{
                 $url = $url."&".$p;
             }
-
             return json($this->getReturn(1, "成功", $url));
         }else{
             return json($this->getReturn(-1, "云端订单编号不存在"));
@@ -490,15 +475,17 @@ class Index
 
             Db::name("pay_order")->where("id",$res['id'])->update(array("state"=>1,"pay_date"=>time(),"close_date"=>time()));
 
-            $url = $res['notify_url'];
+            
 
             $res2 = Db::name("setting")->where("vkey","key")->find();
             $key = $res2['vvalue'];
 
-            $p = "payId=".$res['pay_id']."&param=".$res['param']."&type=".$res['type']."&price=".$res['price']."&reallyPrice=".$res['really_price'];
+            $p = "payId=".$res['pay_id']."&orderId=".$res['order_id']."&param=".$res['param']."&type=".$res['type']."&price=".$res['price']."&reallyPrice=".$res['really_price'];
 
             $sign = $res['pay_id'].$res['param'].$res['type'].$res['price'].$res['really_price'].$key;
             $p = $p . "&sign=".md5($sign);
+
+            $url = $res['notify_url'];
 
             if (strpos($url,"?")===false){
                 $url = $url."?".$p;
